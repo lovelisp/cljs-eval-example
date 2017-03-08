@@ -1,6 +1,6 @@
 (ns cljs-eval-example.server
   (:require [cljs-eval-example.handler :refer [app]]
-            [environ.core :refer [env]]
+            [config.core :refer [env]]
             [ring.adapter.jetty :refer [run-jetty]])
   (:gen-class))
 

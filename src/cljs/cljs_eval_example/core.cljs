@@ -1,9 +1,14 @@
 (ns cljs-eval-example.core
   (:require [reagent.core :as reagent :refer [atom]]
+            [reagent.session :as session]
+            [secretary.core :as secretary :include-macros true]
+            [accountant.core :as accountant]
             [cljs.tools.reader :refer [read-string]]
             [cljs.js :refer [empty-state eval js-eval]]
-            [cljs.env :refer [*compiler*]]
             [cljs.pprint :refer [pprint]]))
+
+;; -------------------------
+;; Views
 
 (defn eval-str [s]
   (eval (empty-state)
@@ -24,8 +29,8 @@
 (defn editor [input]
   (reagent/create-class
    {:render (fn [] [:textarea
-                            {:default-value ""
-                             :auto-complete "off"}])
+                   {:default-value ""
+                    :auto-complete "off"}])
     :component-did-mount (editor-did-mount input)}))
 
 (defn render-code [this]
@@ -42,17 +47,45 @@
   (let [input (atom nil)
         output (atom nil)]
     (fn []
-      [:div
+      [:div [:h2 "Welcome to cljs-eval-example"]
        [editor input]
        [:div
         [:button
          {:on-click #(reset! output (eval-str @input))}
          "run"]]
        [:div
-        [result-view output]]])))
+        [result-view output]]
+       [:div [:a {:href "/about"} "go to about page"]]])))
+
+(defn about-page []
+  [:div [:h2 "About cljs-eval-example"]
+   [:div [:a {:href "/"} "go to the home page"]]])
+
+(defn current-page []
+  [:div [(session/get :current-page)]])
+
+;; -------------------------
+;; Routes
+
+(secretary/defroute "/" []
+  (session/put! :current-page #'home-page))
+
+(secretary/defroute "/about" []
+  (session/put! :current-page #'about-page))
+
+;; -------------------------
+;; Initialize app
 
 (defn mount-root []
-  (reagent/render [home-page] (.getElementById js/document "app")))
+  (reagent/render [current-page] (.getElementById js/document "app")))
 
 (defn init! []
+  (accountant/configure-navigation!
+    {:nav-handler
+     (fn [path]
+       (secretary/dispatch! path))
+     :path-exists?
+     (fn [path]
+       (secretary/locate-route path))})
+  (accountant/dispatch-current!)
   (mount-root))
