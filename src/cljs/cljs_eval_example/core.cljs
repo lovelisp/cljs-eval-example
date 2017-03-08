@@ -29,7 +29,7 @@
     :component-did-mount (editor-did-mount input)}))
 
 (defn render-code [this]
-  (->> this reagent/dom-node (.highlightBlock js/hljs)))
+  (->> this reagent/dom-node .-firstChild (.highlightBlock js/hljs)))
 
 (defn result-view [output]
   (reagent/create-class
